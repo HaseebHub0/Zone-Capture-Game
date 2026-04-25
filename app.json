@@ -17,7 +17,10 @@
       }
     },
     "extra": {
-      "multiplayerUrl": "https://YOUR_RENDER_DOMAIN"
+      "multiplayerUrl": "https://YOUR_RENDER_DOMAIN",
+      "eas": {
+        "projectId": "01e75a26-2786-40c7-99d1-9dbc8bb2fc24"
+      }
     }
   }
 }

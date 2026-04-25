@@ -3,7 +3,7 @@
   "appName": "Zone Clash Arena",
   "webDir": "public",
   "server": {
-    "url": "https://YOUR_DEPLOYED_DOMAIN",
+    "url": "https://zone-capture-game.onrender.com",
     "cleartext": false
   }
 }
