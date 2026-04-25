@@ -1,0 +1,50 @@
+diff --git a/node_modules/react-native/src/private/components/virtualview/VirtualViewExperimentalNativeComponent.js b/node_modules/react-native/src/private/components/virtualview/VirtualViewExperimentalNativeComponent.js
+--- a/node_modules/react-native/src/private/components/virtualview/VirtualViewExperimentalNativeComponent.js
++++ b/node_modules/react-native/src/private/components/virtualview/VirtualViewExperimentalNativeComponent.js
+@@ -34,12 +34,12 @@
+   /**
+    * Rect of the target view, relative to the nearest ancestor scroll container.
+    */
+-  targetRect: Readonly<{
+-    x: Double,
+-    y: Double,
+-    width: Double,
+-    height: Double,
+-  }>,
++  targetRect: {
++    x: Double,
++    y: Double,
++    width: Double,
++    height: Double,
++  },
+ 
+   /**
+    * Rect of the threshold that determines the mode of the target view, relative
+@@ -50,12 +50,12 @@
+    *
+    * This can be used to determine whether and how much new content to render.
+    */
+-  thresholdRect: Readonly<{
+-    x: Double,
+-    y: Double,
+-    width: Double,
+-    height: Double,
+-  }>,
++  thresholdRect: {
++    x: Double,
++    y: Double,
++    width: Double,
++    height: Double,
++  },
+ }>;
+ 
+ type VirtualViewExperimentalNativeProps = Readonly<{
+@@ -88,7 +88,7 @@
+   /**
+    * See `NativeModeChangeEvent`.
+    */
+-  onModeChange?: ?DirectEventHandler<NativeModeChangeEvent>,
++  onModeChange?: DirectEventHandler<NativeModeChangeEvent>,
+ }>;
+ 
+ // TODO: Rename to eliminate "Experimental" suffix in the name.
