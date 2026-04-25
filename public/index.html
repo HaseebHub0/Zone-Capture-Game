@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>Zone Clash Arena</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#08111a" />
+  <style>
+    :root {
+      --bg-1: #08111a;
+      --bg-2: #050a10;
+      --panel: rgba(9, 17, 28, 0.78);
+      --line: rgba(201, 229, 255, 0.1);
+      --text: #eef8ff;
+      --muted: #8eaac4;
+      --accent: #62f2d0;
+      --danger: #ff7e85;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      color: var(--text);
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(89, 183, 255, 0.16), transparent 26%),
+        radial-gradient(circle at top right, rgba(255, 145, 178, 0.12), transparent 24%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      touch-action: none;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hud {
+      position: absolute;
+      inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) auto max(12px, env(safe-area-inset-left));
+      z-index: 5;
+      display: grid;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .top-strip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .player-card,
+    .center-card,
+    .hint-pill,
+    .sheet {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .player-card {
+      min-width: 128px;
+      max-width: 180px;
+      flex: 1 1 128px;
+      padding: 10px 12px;
+      border-radius: 18px;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .emoji {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .name {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .big {
+      font-size: 21px;
+      font-weight: 800;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .mini-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .bar {
+      height: 7px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .bar-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      transition: width 120ms linear;
+    }
+
+    .center-card {
+      padding: 10px 14px;
+      border-radius: 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .clock {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: right;
+      max-width: 56ch;
+    }
+
+    .hint-pill {
+      position: absolute;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 5;
+      padding: 10px 14px;
+      border-radius: 999px;
+      max-width: min(92vw, 780px);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      animation: floatHint 3.6s ease-in-out infinite;
+    }
+
+    @keyframes floatHint {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-3px); }
+    }
+
+    .sheet {
+      position: absolute;
+      inset: 18px;
+      z-index: 8;
+      border-radius: 28px;
+      padding: 26px;
+      overflow: auto;
+    }
+
+    .sheet.hidden {
+      display: none;
+    }
+
+    h1, h2 {
+      margin: 0 0 12px;
+      font-size: clamp(32px, 7vw, 52px);
+      line-height: 0.95;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 20px 0;
+    }
+
+    .card {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(201, 229, 255, 0.08);
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(201, 229, 255, 0.12);
+      background: rgba(8, 14, 24, 0.92);
+      color: var(--text);
+      outline: none;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .button {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 22px;
+      min-width: 170px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #041118;
+      background: linear-gradient(135deg, var(--accent), #a2ffe8);
+      box-shadow: 0 16px 28px rgba(98, 242, 208, 0.22);
+    }
+
+    .button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid rgba(201, 229, 255, 0.1);
+    }
+
+    .button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .error {
+      color: #ffb4b8;
+      min-height: 20px;
+    }
+
+    .meta-line {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .lobby-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .lobby-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(201, 229, 255, 0.08);
+    }
+
+    @media (max-width: 720px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .center-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .status {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="hud">
+      <div class="top-strip" id="playerStrip"></div>
+      <div class="center-card">
+        <div>
+          <div class="name">Room Match Clock</div>
+          <div class="clock" id="timeValue">0.0s</div>
+        </div>
+        <div class="status" id="statusValue">Create a room or join one from another phone.</div>
+      </div>
+    </div>
+
+    <div class="hint-pill" id="hintValue">Swipe anywhere to steer your player after the match starts.</div>
+
+    <div class="sheet" id="menuSheet">
+      <h1>Zone Clash Arena</h1>
+      <p>Friends can install or open the game on their own phones, join the same room code, and play one synchronized live match.</p>
+
+      <div class="grid">
+        <div class="card">
+          <label for="playerName">Your Name</label>
+          <input id="playerName" maxlength="20" placeholder="Enter your name" value="Player" />
+        </div>
+        <div class="card">
+          <label for="maxPlayers">Room Size</label>
+          <select id="maxPlayers">
+            <option value="2">2 Players</option>
+            <option value="3" selected>3 Players</option>
+            <option value="4">4 Players</option>
+            <option value="5">5 Players</option>
+            <option value="6">6 Players</option>
+          </select>
+        </div>
+        <div class="card">
+          <label for="roomCode">Join Room Code</label>
+          <input id="roomCode" maxlength="8" placeholder="e.g. A7K9Q" />
+        </div>
+        <div class="card">
+          <label>Multiplayer Flow</label>
+          <p>One player creates the room. Others join using the code. Host starts the match when everyone is ready.</p>
+          <div class="meta-line">
+            <span class="pill" id="connectionPill">Connecting...</span>
+            <span class="pill" id="latencyPill">Latency --</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="button" id="createButton">Create Room</button>
+        <button class="button secondary" id="joinButton">Join Room</button>
+      </div>
+      <p class="error" id="errorText"></p>
+    </div>
+
+    <div class="sheet hidden" id="lobbySheet">
+      <h2>Room <span id="lobbyCode">-----</span></h2>
+      <p id="lobbyStatus">Waiting for players...</p>
+      <div class="meta-line">
+        <span class="pill" id="inviteLinkText">Invite link pending</span>
+      </div>
+      <div class="actions">
+        <button class="button" id="startButton">Start Match</button>
+        <button class="button secondary" id="copyInviteButton">Copy Invite</button>
+        <button class="button secondary" id="shareInviteButton">Share Invite</button>
+        <button class="button secondary" id="backButton">Leave Room</button>
+      </div>
+      <div class="lobby-list" id="lobbyPlayers"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const ui = {
+        playerStrip: document.getElementById("playerStrip"),
+        timeValue: document.getElementById("timeValue"),
+        statusValue: document.getElementById("statusValue"),
+        hintValue: document.getElementById("hintValue"),
+        menuSheet: document.getElementById("menuSheet"),
+        lobbySheet: document.getElementById("lobbySheet"),
+        playerName: document.getElementById("playerName"),
+        maxPlayers: document.getElementById("maxPlayers"),
+        roomCode: document.getElementById("roomCode"),
+        createButton: document.getElementById("createButton"),
+        joinButton: document.getElementById("joinButton"),
+        startButton: document.getElementById("startButton"),
+        copyInviteButton: document.getElementById("copyInviteButton"),
+        shareInviteButton: document.getElementById("shareInviteButton"),
+        backButton: document.getElementById("backButton"),
+        errorText: document.getElementById("errorText"),
+        lobbyCode: document.getElementById("lobbyCode"),
+        lobbyStatus: document.getElementById("lobbyStatus"),
+        lobbyPlayers: document.getElementById("lobbyPlayers"),
+        connectionPill: document.getElementById("connectionPill"),
+        latencyPill: document.getElementById("latencyPill"),
+        inviteLinkText: document.getElementById("inviteLinkText")
+      };
+
+      const SESSION_KEY = "zone_clash_session_v1";
+
+      const state = {
+        socket: null,
+        connected: false,
+        clientId: null,
+        playerId: null,
+        ownerId: null,
+        roomCode: null,
+        running: false,
+        world: { cols: 92, rows: 58 },
+        grid: [],
+        players: [],
+        enemies: [],
+        elapsed: 0,
+        tick: 0,
+        cellSize: 8,
+        offsetX: 0,
+        offsetY: 0,
+        touch: null,
+        reconnectAttempted: false,
+        pingInterval: null,
+        rttMs: null,
+        renderPlayers: new Map(),
+        renderEnemies: new Map()
+      };
+
+      function saveSession() {
+        if (!state.roomCode || !state.playerId || !state.rejoinToken) return;
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          roomCode: state.roomCode,
+          playerId: state.playerId,
+          rejoinToken: state.rejoinToken,
+          playerName: ui.playerName.value.trim() || "Player"
+        }));
+      }
+
+      function clearSession() {
+        localStorage.removeItem(SESSION_KEY);
+      }
+
+      function loadSession() {
+        try {
+          return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+        } catch {
+          return null;
+        }
+      }
+
+      function connect() {
+        if (state.socket && (state.socket.readyState === WebSocket.OPEN || state.socket.readyState === WebSocket.CONNECTING)) {
+          return;
+        }
+
+        const protocol = location.protocol === "https:" ? "wss" : "ws";
+        state.socket = new WebSocket(`${protocol}://${location.host}`);
+
+        state.socket.addEventListener("open", () => {
+          state.connected = true;
+          ui.errorText.textContent = "";
+          ui.statusValue.textContent = "Connected to multiplayer server.";
+          ui.connectionPill.textContent = "Connected";
+          startPingLoop();
+
+          const session = loadSession();
+          if (session && !state.reconnectAttempted) {
+            state.reconnectAttempted = true;
+            ui.playerName.value = session.playerName || ui.playerName.value;
+            send({
+              type: "rejoin_room",
+              roomCode: session.roomCode,
+              rejoinToken: session.rejoinToken
+            });
+          }
+        });
+
+        state.socket.addEventListener("message", (event) => {
+          const data = JSON.parse(event.data);
+          handleMessage(data);
+        });
+
+        state.socket.addEventListener("close", () => {
+          state.connected = false;
+          stopPingLoop();
+          ui.connectionPill.textContent = "Disconnected";
+          ui.statusValue.textContent = "Disconnected from server.";
+          if (state.roomCode) ui.hintValue.textContent = "Trying to reconnect...";
+          setTimeout(() => connect(), 1200);
+        });
+      }
+
+      function startPingLoop() {
+        stopPingLoop();
+        state.pingInterval = setInterval(() => {
+          if (state.socket && state.socket.readyState === WebSocket.OPEN) {
+            send({ type: "ping", sentAt: Date.now() });
+          }
+        }, 2500);
+      }
+
+      function stopPingLoop() {
+        if (state.pingInterval) clearInterval(state.pingInterval);
+        state.pingInterval = null;
+      }
+
+      function send(payload) {
+        if (!state.socket || state.socket.readyState !== WebSocket.OPEN) return;
+        state.socket.send(JSON.stringify(payload));
+      }
+
+      function inviteLinkFor(code) {
+        return `${location.origin}/?room=${encodeURIComponent(code)}`;
+      }
+
+      function updateInviteUi() {
+        if (!state.roomCode) {
+          ui.inviteLinkText.textContent = "Invite link pending";
+          return;
+        }
+        ui.inviteLinkText.textContent = inviteLinkFor(state.roomCode);
+      }
+
+      function handleMessage(data) {
+        if (data.type === "connected") {
+          state.clientId = data.clientId;
+          return;
+        }
+
+        if (data.type === "pong") {
+          if (data.sentAt) {
+            state.rttMs = Date.now() - data.sentAt;
+            ui.latencyPill.textContent = `Latency ${state.rttMs}ms`;
+          }
+          return;
+        }
+
+        if (data.type === "joined" || data.type === "rejoined") {
+          state.roomCode = data.roomCode;
+          state.playerId = data.playerId;
+          state.rejoinToken = data.rejoinToken;
+          saveSession();
+          updateInviteUi();
+          ui.lobbyCode.textContent = data.roomCode;
+          ui.menuSheet.classList.add("hidden");
+          ui.lobbySheet.classList.remove("hidden");
+          ui.errorText.textContent = "";
+          history.replaceState(null, "", `/?room=${encodeURIComponent(data.roomCode)}`);
+          return;
+        }
+
+        if (data.type === "lobby_state") {
+          state.roomCode = data.roomCode;
+          state.ownerId = data.ownerId;
+          state.players = data.players || [];
+          ui.lobbyCode.textContent = data.roomCode;
+          ui.lobbyStatus.textContent = data.statusText || "Waiting for players...";
+          ui.startButton.disabled = state.playerId !== state.ownerId || data.running;
+          updateInviteUi();
+          renderLobby();
+          return;
+        }
+
+        if (data.type === "game_state") {
+          state.running = data.running;
+          state.world = data.world;
+          state.grid = data.grid;
+          state.players = data.players;
+          state.enemies = data.enemies;
+          state.elapsed = data.elapsed;
+          state.tick = data.tick;
+          ui.lobbySheet.classList.add("hidden");
+          ui.menuSheet.classList.add("hidden");
+          ui.timeValue.textContent = `${data.elapsed.toFixed(1)}s`;
+          ui.statusValue.textContent = data.statusText || "Match live";
+          ui.hintValue.textContent = "Swipe anywhere to steer your player.";
+          hydrateRenderState();
+          renderHud();
+          return;
+        }
+
+        if (data.type === "game_over") {
+          state.running = false;
+          state.players = data.ranking || state.players;
+          renderHud();
+          ui.menuSheet.classList.remove("hidden");
+          ui.errorText.textContent = data.statusText || "Match complete.";
+          clearSession();
+          return;
+        }
+
+        if (data.type === "error") {
+          ui.errorText.textContent = data.message;
+          if (data.message && data.message.toLowerCase().includes("saved session")) {
+            clearSession();
+          }
+        }
+      }
+
+      function hydrateRenderState() {
+        for (const player of state.players) {
+          const current = state.renderPlayers.get(player.id);
+          if (!current) {
+            state.renderPlayers.set(player.id, { x: player.x, y: player.y, tx: player.x, ty: player.y });
+          } else {
+            current.tx = player.x;
+            current.ty = player.y;
+          }
+        }
+
+        const seenEnemyIds = new Set();
+        for (const enemy of state.enemies) {
+          seenEnemyIds.add(enemy.id);
+          const current = state.renderEnemies.get(enemy.id);
+          if (!current) {
+            state.renderEnemies.set(enemy.id, { x: enemy.x, y: enemy.y, tx: enemy.x, ty: enemy.y });
+          } else {
+            current.tx = enemy.x;
+            current.ty = enemy.y;
+          }
+        }
+
+        for (const key of [...state.renderEnemies.keys()]) {
+          if (!seenEnemyIds.has(key)) state.renderEnemies.delete(key);
+        }
+      }
+
+      function renderLobby() {
+        ui.lobbyPlayers.innerHTML = "";
+        for (const player of state.players) {
+          const row = document.createElement("div");
+          row.className = "lobby-row";
+          const detail = player.reconnecting ? "Reconnecting" : (player.isBot ? "Bot" : "Human");
+          row.innerHTML = `
+            <div>${player.emoji} ${player.name}</div>
+            <div class="pill">${detail}${player.id === state.ownerId ? " • Host" : ""}</div>
+          `;
+          ui.lobbyPlayers.appendChild(row);
+        }
+      }
+
+      function renderHud() {
+        ui.playerStrip.innerHTML = "";
+        for (const player of state.players) {
+          const status = player.reconnecting ? "Reconnecting" : player.status;
+          const card = document.createElement("div");
+          card.className = "player-card";
+          card.innerHTML = `
+            <div class="card-top">
+              <div>
+                <div class="name">${player.name}</div>
+                <div class="big">${player.areaPercent.toFixed(1)}%</div>
+              </div>
+              <div class="emoji">${player.emoji}</div>
+            </div>
+            <div class="mini-row">
+              <span>${status}</span>
+              <span>${player.score} pts</span>
+            </div>
+            <div class="bar"><div class="bar-fill" style="width:${player.areaPercent}%;background:${player.trailColor};"></div></div>
+          `;
+          ui.playerStrip.appendChild(card);
+        }
+      }
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        const cellSize = Math.max(6, Math.floor(Math.min(canvas.width / state.world.cols, canvas.height / state.world.rows)));
+        state.cellSize = cellSize;
+        state.offsetX = Math.floor((canvas.width - (state.world.cols * cellSize)) / 2);
+        state.offsetY = Math.floor((canvas.height - (state.world.rows * cellSize)) / 2);
+      }
+
+      function animateEntities() {
+        for (const player of state.players) {
+          const renderState = state.renderPlayers.get(player.id);
+          if (!renderState) continue;
+          const smoothing = player.id === state.playerId ? 0.45 : 0.22;
+          renderState.x += (renderState.tx - renderState.x) * smoothing;
+          renderState.y += (renderState.ty - renderState.y) * smoothing;
+        }
+
+        for (const enemy of state.enemies) {
+          const renderState = state.renderEnemies.get(enemy.id);
+          if (!renderState) continue;
+          renderState.x += (renderState.tx - renderState.x) * 0.18;
+          renderState.y += (renderState.ty - renderState.y) * 0.18;
+        }
+      }
+
+      function draw() {
+        animateEntities();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        drawBoard();
+        drawEnemies();
+        drawPlayers();
+        drawFrame();
+        requestAnimationFrame(draw);
+      }
+
+      function drawBackground() {
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, "#07111a");
+        gradient.addColorStop(1, "#04080d");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function drawBoard() {
+        if (!state.grid || state.grid.length === 0) return;
+        for (let y = 0; y < state.world.rows; y++) {
+          for (let x = 0; x < state.world.cols; x++) {
+            const cell = state.grid[y][x];
+            const px = state.offsetX + x * state.cellSize;
+            const py = state.offsetY + y * state.cellSize;
+            const owner = state.players.find((player) => player.safeCell === cell);
+
+            if (owner) {
+              ctx.fillStyle = owner.color;
+            } else {
+              ctx.fillStyle = (x + y) % 2 === 0 ? "#0a1520" : "#0d1a26";
+            }
+            ctx.fillRect(px, py, state.cellSize, state.cellSize);
+          }
+        }
+
+        for (const player of state.players) {
+          const trailCells = [];
+          for (let y = 0; y < state.world.rows; y++) {
+            for (let x = 0; x < state.world.cols; x++) {
+              if (state.grid[y][x] === player.trailCell) trailCells.push({ x, y });
+            }
+          }
+          if (trailCells.length > 0) {
+            ctx.fillStyle = player.trailColor;
+            for (const cell of trailCells) {
+              ctx.fillRect(
+                state.offsetX + cell.x * state.cellSize,
+                state.offsetY + cell.y * state.cellSize,
+                state.cellSize,
+                state.cellSize
+              );
+            }
+          }
+        }
+      }
+
+      function drawPlayers() {
+        for (const player of state.players) {
+          if (!player.alive) continue;
+          const renderState = state.renderPlayers.get(player.id);
+          const x = renderState ? renderState.x : player.x;
+          const y = renderState ? renderState.y : player.y;
+          const px = state.offsetX + (x + 0.5) * state.cellSize;
+          const py = state.offsetY + (y + 0.5) * state.cellSize;
+
+          ctx.save();
+          ctx.shadowColor = player.trailColor;
+          ctx.shadowBlur = state.cellSize * 1.1;
+          ctx.fillStyle = player.glow;
+          ctx.beginPath();
+          ctx.arc(px, py, state.cellSize * 0.58, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.save();
+          ctx.font = `${Math.max(16, state.cellSize * 1.16)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(player.emoji, px, py + 1);
+          ctx.restore();
+        }
+      }
+
+      function drawEnemies() {
+        for (const enemy of state.enemies) {
+          const renderState = state.renderEnemies.get(enemy.id);
+          const x = renderState ? renderState.x : enemy.x;
+          const y = renderState ? renderState.y : enemy.y;
+          const px = state.offsetX + (x + 0.5) * state.cellSize;
+          const py = state.offsetY + (y + 0.5) * state.cellSize;
+          const radius = Math.max(4, state.cellSize * 0.3);
+
+          ctx.save();
+          ctx.shadowColor = "rgba(255,214,120,0.28)";
+          ctx.shadowBlur = state.cellSize;
+          ctx.fillStyle = "#ffd67b";
+          ctx.beginPath();
+          ctx.arc(px, py, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawFrame() {
+        ctx.save();
+        ctx.strokeStyle = "rgba(210,235,255,0.08)";
+        ctx.lineWidth = Math.max(2, state.cellSize * 0.18);
+        ctx.strokeRect(state.offsetX, state.offsetY, state.world.cols * state.cellSize, state.world.rows * state.cellSize);
+        ctx.restore();
+      }
+
+      function queueDirection(x, y) {
+        send({ type: "input", dir: { x, y } });
+      }
+
+      function copyInvite() {
+        if (!state.roomCode) return;
+        const link = inviteLinkFor(state.roomCode);
+        navigator.clipboard.writeText(link).then(() => {
+          ui.errorText.textContent = "Invite link copied.";
+        }).catch(() => {
+          ui.errorText.textContent = link;
+        });
+      }
+
+      function shareInvite() {
+        if (!state.roomCode) return;
+        const link = inviteLinkFor(state.roomCode);
+        if (navigator.share) {
+          navigator.share({
+            title: "Join my Zone Clash Arena room",
+            text: `Room ${state.roomCode} is ready. Join the match here.`,
+            url: link
+          }).catch(() => {});
+        } else {
+          copyInvite();
+        }
+      }
+
+      canvas.addEventListener("pointerdown", (event) => {
+        state.touch = { x: event.clientX, y: event.clientY };
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        if (!state.touch || !state.running) return;
+        const dx = event.clientX - state.touch.x;
+        const dy = event.clientY - state.touch.y;
+        if (Math.hypot(dx, dy) < 18) return;
+        if (Math.abs(dx) > Math.abs(dy)) queueDirection(Math.sign(dx), 0);
+        else queueDirection(0, Math.sign(dy));
+        state.touch = { x: event.clientX, y: event.clientY };
+      });
+
+      canvas.addEventListener("pointerup", () => { state.touch = null; });
+      canvas.addEventListener("pointercancel", () => { state.touch = null; });
+
+      ui.createButton.addEventListener("click", () => {
+        connect();
+        setTimeout(() => {
+          send({
+            type: "create_room",
+            name: ui.playerName.value.trim() || "Host",
+            maxPlayers: Number(ui.maxPlayers.value)
+          });
+        }, 140);
+      });
+
+      ui.joinButton.addEventListener("click", () => {
+        connect();
+        setTimeout(() => {
+          send({
+            type: "join_room",
+            name: ui.playerName.value.trim() || "Player",
+            roomCode: ui.roomCode.value.trim().toUpperCase()
+          });
+        }, 140);
+      });
+
+      ui.startButton.addEventListener("click", () => send({ type: "start_match" }));
+      ui.copyInviteButton.addEventListener("click", copyInvite);
+      ui.shareInviteButton.addEventListener("click", shareInvite);
+      ui.backButton.addEventListener("click", () => {
+        clearSession();
+        location.href = "/";
+      });
+
+      window.addEventListener("resize", resize);
+      document.body.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+
+      const prefillCode = new URLSearchParams(location.search).get("room");
+      if (prefillCode) ui.roomCode.value = prefillCode.toUpperCase();
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+      }
+
+      resize();
+      draw();
+      connect();
+    })();
+  </script>
+</body>
+</html>

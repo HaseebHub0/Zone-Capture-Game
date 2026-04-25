@@ -1,0 +1,9 @@
+{
+  "appId": "com.zoneclash.arena",
+  "appName": "Zone Clash Arena",
+  "webDir": "public",
+  "server": {
+    "url": "https://YOUR_DEPLOYED_DOMAIN",
+    "cleartext": false
+  }
+}

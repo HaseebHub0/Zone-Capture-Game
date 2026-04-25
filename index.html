@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Zone Clash Arena Launcher</title>
+  <style>
+    :root {
+      --bg-1: #08111a;
+      --bg-2: #04080d;
+      --panel: rgba(9, 17, 28, 0.88);
+      --line: rgba(194, 228, 255, 0.12);
+      --text: #eef8ff;
+      --muted: #95aec4;
+      --accent: #62f2d0;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      color: var(--text);
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(89, 183, 255, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(98, 242, 208, 0.12), transparent 24%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .panel {
+      width: min(720px, 100%);
+      padding: 30px;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(34px, 7vw, 54px);
+      line-height: 0.95;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .note {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(194, 228, 255, 0.08);
+      margin: 14px 0;
+    }
+
+    code {
+      font-family: Consolas, monospace;
+      color: #cffff1;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 14px 22px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #a2ffe8);
+      color: #041118;
+      font-weight: 800;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>Zone Clash Arena</h1>
+    <p>This project is now set up for real room-based online multiplayer, where friends join from their own phones using a room code.</p>
+    <div class="note">
+      <p><strong>Important:</strong> online multiplayer cannot run from <code>file://</code> mode. Start the local server first, then open the HTTP URL.</p>
+      <p>Run: <code>node server.js</code></p>
+      <p>Then open: <code>http://localhost:3000</code></p>
+    </div>
+    <p>The actual multiplayer client is served from the Node server under <code>public/index.html</code>, with room create/join flow and realtime synced gameplay.</p>
+  </div>
+</body>
+</html>

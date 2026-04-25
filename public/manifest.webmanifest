@@ -1,0 +1,10 @@
+{
+  "name": "Zone Clash Arena",
+  "short_name": "Zone Clash",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08111a",
+  "theme_color": "#08111a",
+  "description": "Room-based multiplayer zone capture game.",
+  "icons": []
+}

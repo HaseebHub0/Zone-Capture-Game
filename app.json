@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Zone Clash Arena",
+    "slug": "zone-clash-arena",
+    "scheme": "zoneclasharena",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.zoneclash.arena",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#08111a"
+      }
+    },
+    "extra": {
+      "multiplayerUrl": "https://YOUR_RENDER_DOMAIN"
+    }
+  }
+}
